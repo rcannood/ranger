@@ -102,6 +102,7 @@
 ##' @param always.split.variables Character vector with variable names to be always selected in addition to the \code{mtry} variables tried for splitting.
 ##' @param respect.unordered.factors Handling of unordered factor covariates. One of 'ignore', 'order' and 'partition'. For the "extratrees" splitrule the default is "partition" for all other splitrules 'ignore'. Alternatively TRUE (='order') or FALSE (='ignore') can be used. See below for details.
 ##' @param scale.permutation.importance Scale permutation importance by standard error as in (Breiman 2001). Only applicable if permutation variable importance mode selected.
+##' @param local.importance Calculate and return local importance values as in (Breiman 2001). Only applicable if permutation variable importance mode selected.
 ##' @param keep.inbag Save how often observations are in-bag in each tree.
 ##' @param inbag Manually set observations per tree. List of size num.trees, containing inbag counts for each observation. Can be used for stratified sampling.
 ##' @param holdout Hold-out mode. Hold-out all samples with case weight 0 and use these for variable importance and prediction error.
@@ -192,7 +193,7 @@
 ##'   }
 ##' @seealso \code{\link{predict.ranger}}
 ##' @encoding UTF-8
-##' @useDynLib ranger, .registration = TRUE
+##' @useDynLib rangercase, .registration = TRUE
 ##' @importFrom Rcpp evalCpp
 ##' @import stats
 ##' @import utils
@@ -207,6 +208,7 @@ ranger <- function(formula = NULL, data = NULL, num.trees = 500, mtry = NULL,
                    split.select.weights = NULL, always.split.variables = NULL,
                    respect.unordered.factors = NULL,
                    scale.permutation.importance = FALSE,
+                   local.importance = FALSE,
                    keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
                    quantreg = FALSE, oob.error = TRUE,
                    num.threads = NULL, save.memory = FALSE,
@@ -315,7 +317,7 @@ ranger <- function(formula = NULL, data = NULL, num.trees = 500, mtry = NULL,
     independent.variable.names <- names(data.selected)[-1]
   } else {
     independent.variable.names <- colnames(data.selected)[colnames(data.selected) != dependent.variable.name &
-                                                          colnames(data.selected) != status.variable.name]
+                                                            colnames(data.selected) != status.variable.name]
   }
 
   ## respect.unordered.factors
@@ -398,7 +400,7 @@ ranger <- function(formula = NULL, data = NULL, num.trees = 500, mtry = NULL,
   ## Input data and variable names, create final data matrix
   if (!is.null(formula) && treetype == 5) {
     data.final <- data.matrix(cbind(response[, 1], response[, 2],
-                              data.selected[-1]))
+                                    data.selected[-1]))
     colnames(data.final) <- c(dependent.variable.name, status.variable.name,
                               independent.variable.names)
   } else if (is.matrix(data.selected) || inherits(data.selected, "Matrix")) {
@@ -533,7 +535,9 @@ ranger <- function(formula = NULL, data = NULL, num.trees = 500, mtry = NULL,
   } else if (importance == "impurity_corrected" || importance == "impurity_unbiased") {
     importance.mode <- 5
   } else if (importance == "permutation") {
-    if (scale.permutation.importance) {
+    if (local.importance) {
+      importance.mode <- 6
+    } else if (scale.permutation.importance) {
       importance.mode <- 2
     } else {
       importance.mode <- 3
@@ -807,6 +811,36 @@ ranger <- function(formula = NULL, data = NULL, num.trees = 500, mtry = NULL,
   ## Prepare results
   if (importance.mode != 0) {
     names(result$variable.importance) <- all.independent.variable.names
+    if (importance.mode == 6) {
+      # process vimp cors
+      vic <- data.frame(matrix(
+        result$variable.importance.cor,
+        byrow = TRUE,
+        ncol = 6,
+        dimnames = list(
+          all.independent.variable.names,
+          c("n", "sumx", "sumy", "sumxy", "sumxx", "sumyy")
+        )
+      ), check.names = FALSE)
+      vic_cor <-
+        (vic$sumxy - vic$sumx * vic$sumy / vic$n) /
+        (sqrt(vic$sumxx - vic$sumx^2 / vic$n) * sqrt(vic$sumyy - vic$sumy^2 / vic$n))
+      names(vic_cor) <- all.independent.variable.names
+
+      result$variable.importance.cor <- vic_cor
+
+      # process casewise vimp
+      result$variable.importance.casewise <-
+        matrix(
+          result$variable.importance.casewise,
+          byrow = TRUE,
+          nrow = length(all.independent.variable.names),
+          dimnames = list(
+            all.independent.variable.names,
+            rownames(data)
+          )
+        )
+    }
   }
 
   ## Set predictions
