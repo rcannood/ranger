@@ -1,4 +1,4 @@
-Package: ranger
+Package: rangercase
 Type: Package
 Title: A Fast Implementation of Random Forests
 Version: 0.11.4
