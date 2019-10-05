@@ -39,7 +39,7 @@ importance <- function(x, ...)  UseMethod("importance")
 ##' @seealso \code{\link{ranger}}
 ##' @author Marvin N. Wright
 ##' @aliases importance
-##' @export 
+##' @export
 importance.ranger <- function(x, ...) {
   if (class(x) != "ranger") {
     stop("Object ist no ranger object.")
@@ -50,20 +50,20 @@ importance.ranger <- function(x, ...) {
   return(x$variable.importance)
 }
 
-##' Compute variable importance with p-values. 
-##' For high dimensional data, the fast method of Janitza et al. (2016) can be used. 
-##' The permutation approach of Altmann et al. (2010) is computationally intensive but can be used with all kinds of data. 
-##' See below for details. 
-##' 
+##' Compute variable importance with p-values.
+##' For high dimensional data, the fast method of Janitza et al. (2016) can be used.
+##' The permutation approach of Altmann et al. (2010) is computationally intensive but can be used with all kinds of data.
+##' See below for details.
+##'
 ##' The method of Janitza et al. (2016) uses a clever trick:
-##' With an unbiased variable importance measure, the importance values of non-associated variables vary randomly around zero. 
+##' With an unbiased variable importance measure, the importance values of non-associated variables vary randomly around zero.
 ##' Thus, all non-positive importance values are assumed to correspond to these non-associated variables and they are used to construct a distribution of the importance under the null hypothesis of no association to the response.
-##' Since only the non-positive values of this distribution can be observed, the positive values are created by mirroring the negative distribution. 
+##' Since only the non-positive values of this distribution can be observed, the positive values are created by mirroring the negative distribution.
 ##' See Janitza et al. (2016) for details.
-##' 
-##' The method of Altmann et al. (2010) uses a simple permutation test: 
+##'
+##' The method of Altmann et al. (2010) uses a simple permutation test:
 ##' The distribution of the importance under the null hypothesis of no association to the response is created by several replications of permuting the response, growing an RF and computing the variable importance.
-##' The authors recommend 50-100 permutations. 
+##' The authors recommend 50-100 permutations.
 ##' However, much larger numbers have to be used to estimate more precise p-values.
 ##' We add 1 to the numerator and denominator to avoid zero p-values.
 ##'
@@ -113,17 +113,17 @@ importance_pvalues <- function(x, method = c("janitza", "altmann"), num.permutat
     if (x$treetype != "Classification") {
       warning("This method is tested for classification only, use with care.")
     }
-    
+
     ## Mirrored VIMP
     m1 <- x$variable.importance[x$variable.importance < 0]
     m2 <- x$variable.importance[x$variable.importance == 0]
     vimp <- c(m1, -m1, m2)
-    
+
     ## Compute p-value
     ## Note: ecdf is smaller or equal, problems with 0 importance values
     pval <- 1 - numSmaller(x$variable.importance, vimp) / length(vimp)
-    
-    ## TODO: 100 ok? increase? 
+
+    ## TODO: 100 ok? increase?
     if (length(m1) == 0) {
       stop("No negative importance values found. Consider the 'altmann' approach.")
     }
@@ -140,7 +140,7 @@ importance_pvalues <- function(x, method = c("janitza", "altmann"), num.permutat
     if (is.character(formula)) {
       formula <- formula(formula)
     }
-    
+
     ## Permute and compute importance again
     if (x$treetype == "Survival") {
       dependent.variable.name <- all.vars(formula)[1:2]
@@ -150,10 +150,10 @@ importance_pvalues <- function(x, method = c("janitza", "altmann"), num.permutat
     vimp <- sapply(1:num.permutations, function(i) {
       dat <- data
       dat[, dependent.variable.name] <- dat[sample(nrow(dat)), dependent.variable.name]
-      ranger(formula, dat, num.trees = x$num.trees, mtry = x$mtry, min.node.size = x$min.node.size, 
+      ranger(formula, dat, num.trees = x$num.trees, mtry = x$mtry, min.node.size = x$min.node.size,
              importance = x$importance.mode, replace = x$replace, ...)$variable.importance
     })
-    
+
     ## Compute p-value
     pval <- sapply(1:nrow(vimp), function(i) {
       (sum(vimp[i, ] >= x$variable.importance[i]) + 1)/(ncol(vimp) + 1)
@@ -162,7 +162,7 @@ importance_pvalues <- function(x, method = c("janitza", "altmann"), num.permutat
   } else {
     stop("Unknown p-value method. Available methods are: 'janitza' and 'altmann'.")
   }
-  
+
   ## Return VIMP and p-values
   res <- cbind(x$variable.importance, pval)
   colnames(res) <- c("importance", "pvalue")
