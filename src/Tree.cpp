@@ -198,7 +198,6 @@ void Tree::computePermutationImportance(std::vector<double>& forest_importance, 
   size_t num_independent_variables = data->getNumCols() - data->getNoSplitVariables().size();
 
 // Compute normal prediction accuracy for each tree. Predictions already computed.
-  // TODO: Are we sure that the predictions that are already computed are only for the OOB?
   double accuracy_normal;
   std::vector<double> prederr_normal_casewise;
   std::vector<double> prederr_shuf_casewise;
