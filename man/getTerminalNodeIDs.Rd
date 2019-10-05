@@ -15,12 +15,11 @@ getTerminalNodeIDs(rf, dat)
 Matrix with terminal nodeIDs for all observations in dataset and trees.
 }
 \description{
-This function is deprecated. 
+This function is deprecated.
 Please use predict() with \code{type = "terminalNodes"} instead.
 This function calls predict() now.
 }
 \examples{
-library(ranger)
 rf <- ranger(Species ~ ., data = iris, num.trees = 5, write.forest = TRUE)
 getTerminalNodeIDs(rf, iris)
 }
