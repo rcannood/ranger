@@ -135,6 +135,8 @@
 ##'   \item{\code{num.samples}}{Number of samples.}
 ##'   \item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
 ##' @examples
+##' require(ranger)
+##'
 ##' ## Classification forest with default settings
 ##' ranger(Species ~ ., data = iris)
 ##'
@@ -810,6 +812,23 @@ ranger <- function(formula = NULL, data = NULL, num.trees = 500, mtry = NULL,
   if (importance.mode != 0) {
     names(result$variable.importance) <- all.independent.variable.names
     if (importance.mode == 6) {
+      # process vimp cors
+      vic <- data.frame(matrix(
+        result$variable.importance.cor,
+        byrow = TRUE,
+        ncol = 6,
+        dimnames = list(
+          all.independent.variable.names,
+          c("n", "sumx", "sumy", "sumxy", "sumxx", "sumyy")
+        )
+      ), check.names = FALSE)
+      vic_cor <-
+        (vic$sumxy - vic$sumx * vic$sumy / vic$n) /
+        (sqrt(vic$sumxx - vic$sumx^2 / vic$n) * sqrt(vic$sumyy - vic$sumy^2 / vic$n))
+      names(vic_cor) <- all.independent.variable.names
+
+      result$variable.importance.cor <- vic_cor
+
       # process casewise vimp
       result$variable.importance.casewise <-
         matrix(

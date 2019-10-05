@@ -193,7 +193,7 @@ void Tree::predict(const Data* prediction_data, bool oob_prediction) {
 }
 
 void Tree::computePermutationImportance(std::vector<double>& forest_importance, std::vector<double>& forest_variance,
-    std::vector<double>& forest_importance_casewise) {
+    std::vector<double>& forest_importance_casewise, std::vector<double>& forest_importance_cor) {
 
   size_t num_independent_variables = data->getNumCols() - data->getNoSplitVariables().size();
 
@@ -205,14 +205,15 @@ void Tree::computePermutationImportance(std::vector<double>& forest_importance, 
   if (importance_mode == IMP_PERM_CASEWISE) {
     prederr_normal_casewise.resize(num_samples_oob, 0);
     prederr_shuf_casewise.resize(num_samples_oob, 0);
-    accuracy_normal = computePredictionCasewiseErrorInternal(prederr_normal_casewise);
+    accuracy_normal = computePredictionCasewiseErrorInternal(prediction_terminal_nodeIDs, prederr_normal_casewise);
 
   } else {
-    accuracy_normal = computePredictionAccuracyInternal();
+    accuracy_normal = computePredictionAccuracyInternal(prediction_terminal_nodeIDs);
   }
 
-  prediction_terminal_nodeIDs.clear();
-  prediction_terminal_nodeIDs.resize(num_samples_oob, 0);
+  std::vector<size_t> prediction_terminal_nodeIDs_shuf(num_samples_oob);
+  // prediction_terminal_nodeIDs.clear();
+  // prediction_terminal_nodeIDs.resize(num_samples_oob, 0);
 
 // Reserve space for permutations, initialize with oob_sampleIDs
   std::vector<size_t> permutations(oob_sampleIDs);
@@ -229,19 +230,21 @@ void Tree::computePermutationImportance(std::vector<double>& forest_importance, 
     }
 
     // Permute and compute prediction accuracy again for this permutation and save difference
-    permuteAndPredictOobSamples(varID, permutations);
+    permuteAndPredictOobSamples(varID, permutations, prediction_terminal_nodeIDs_shuf);
 
     double accuracy_permuted;
     if (importance_mode == IMP_PERM_CASEWISE) {
-      accuracy_permuted = computePredictionCasewiseErrorInternal(prederr_shuf_casewise);
+      accuracy_permuted = computePredictionCasewiseErrorInternal(prediction_terminal_nodeIDs_shuf, prederr_shuf_casewise);
 
       for (size_t j = 0; j < num_samples_oob; ++j) {
         forest_importance_casewise[i * num_samples + oob_sampleIDs[j]] +=
           prederr_shuf_casewise[j] - prederr_normal_casewise[j];
       }
 
+      computeCorValues(prediction_terminal_nodeIDs, prediction_terminal_nodeIDs_shuf, permutations, i, varID, forest_importance_cor);
+
     } else {
-      accuracy_permuted = computePredictionAccuracyInternal();
+      accuracy_permuted = computePredictionAccuracyInternal(prediction_terminal_nodeIDs_shuf);
     }
 
     double accuracy_difference = accuracy_normal - accuracy_permuted;
@@ -422,7 +425,7 @@ size_t Tree::dropDownSamplePermuted(size_t permuted_varID, size_t sampleID, size
   return nodeID;
 }
 
-void Tree::permuteAndPredictOobSamples(size_t permuted_varID, std::vector<size_t>& permutations) {
+void Tree::permuteAndPredictOobSamples(size_t permuted_varID, std::vector<size_t>& permutations, std::vector<size_t>& pred_nodeIDs) {
 
 // Permute OOB sample
 //std::vector<size_t> permutations(oob_sampleIDs);
@@ -431,7 +434,7 @@ void Tree::permuteAndPredictOobSamples(size_t permuted_varID, std::vector<size_t
 // For each sample, drop down the tree and add prediction
   for (size_t i = 0; i < num_samples_oob; ++i) {
     size_t nodeID = dropDownSamplePermuted(permuted_varID, oob_sampleIDs[i], permutations[i]);
-    prediction_terminal_nodeIDs[i] = nodeID;
+    pred_nodeIDs[i] = nodeID;
   }
 }
 

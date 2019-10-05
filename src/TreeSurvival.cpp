@@ -74,11 +74,12 @@ void TreeSurvival::computeSurvival(size_t nodeID) {
   chf[nodeID] = chf_temp;
 }
 
-double TreeSurvival::computePredictionAccuracyInternal() {
+double TreeSurvival::computePredictionAccuracyInternal(std::vector<size_t>& pred_nodeIDs) {
+
   // Compute summed chf for samples
   std::vector<double> sum_chf;
-  for (size_t i = 0; i < prediction_terminal_nodeIDs.size(); ++i) {
-    size_t terminal_nodeID = prediction_terminal_nodeIDs[i];
+  for (size_t i = 0; i < pred_nodeIDs.size(); ++i) {
+    size_t terminal_nodeID = pred_nodeIDs[i];
     sum_chf.push_back(std::accumulate(chf[terminal_nodeID].begin(), chf[terminal_nodeID].end(), 0.0));
   }
 
@@ -86,8 +87,11 @@ double TreeSurvival::computePredictionAccuracyInternal() {
   return computeConcordanceIndex(*data, sum_chf, dependent_varID, status_varID, oob_sampleIDs);
 }
 
-double TreeSurvival::computePredictionCasewiseErrorInternal(std::vector<double>& prederr_casewise) {
+double TreeSurvival::computePredictionCasewiseErrorInternal(std::vector<size_t>& pred_nodeIDs, std::vector<double>& prederr_casewise) {
   return (0);
+}
+void TreeSurvival::computeCorValues(std::vector<size_t>& pred_normal_nodeIDs, std::vector<size_t>& pred_shuf_nodeIDs,
+      std::vector<size_t>& permutations, size_t i, size_t varID, std::vector<double>& forest_importance_cor) {
 }
 
 bool TreeSurvival::splitNodeInternal(size_t nodeID, std::vector<size_t>& possible_split_varIDs) {
