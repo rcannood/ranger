@@ -1,6 +1,4 @@
 ## Tests for print function
-
-library(ranger)
 context("ranger_print")
 
 ## Initialize the random forest

@@ -1,5 +1,4 @@
-library(ranger)
-library(survival)
+# library(survival)
 context("genabel")
 
 test_that("classification gwaa rf is of class ranger with 14 elements", {

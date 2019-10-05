@@ -1,6 +1,4 @@
 ## Tests for class weights
-
-library(ranger)
 context("ranger_classweights")
 
 test_that("No error if class weights used", {

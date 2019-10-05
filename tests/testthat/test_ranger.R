@@ -1,5 +1,3 @@
-library(ranger)
-library(survival)
 context("ranger")
 
 test_that("Matrix interface works for Probability estimation", {
@@ -26,52 +24,52 @@ test_that("Error if sample fraction is 0 or >1", {
 })
 
 test_that("Error if sample fraction is vector for regression", {
-  expect_error(ranger(Sepal.Length ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2)), 
+  expect_error(ranger(Sepal.Length ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2)),
                "Error: Invalid value for sample\\.fraction\\. Vector values only valid for classification forests\\.")
 })
 
 test_that("Error if sample fraction is vector of wrong size", {
-  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2)), 
+  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2)),
                "Error: Invalid value for sample\\.fraction\\. Expecting 3 values, provided 2\\.")
 })
 
 test_that("Error if element of sample fraction vector is <0 or >1", {
-  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 1.1, 0.3)), 
+  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 1.1, 0.3)),
                "Error: Invalid value for sample\\.fraction. Please give a value in \\(0,1\\] or a vector of values in \\[0,1\\]\\.")
-  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(-3, 0.5, 0.3)), 
+  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(-3, 0.5, 0.3)),
                "Error: Invalid value for sample.fraction. Please give a value in \\(0,1] or a vector of values in \\[0,1\\]\\.")
 })
 
 test_that("Error if sum of sample fraction vector is 0", {
-  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0, 0, 0)), 
+  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0, 0, 0)),
                "Error: Invalid value for sample\\.fraction. Sum of values must be >0\\.")
 })
 
 test_that("Error if replace=FALSE and not enough samples", {
-  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4), 
-                      replace = FALSE, keep.inbag = TRUE), 
+  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4),
+                      replace = FALSE, keep.inbag = TRUE),
                "Error: Not enough samples in class virginica; available: 50, requested: 60.")
-  expect_silent(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4), 
+  expect_silent(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4),
                        replace = TRUE, keep.inbag = TRUE))
 })
 
 test_that("Error if sample.fraction and case.weights", {
-  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4), 
-                      case.weights = rbinom(nrow(iris), 1, 0.5)), 
+  expect_error(ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4),
+                      case.weights = rbinom(nrow(iris), 1, 0.5)),
                "Error: Combination of case\\.weights and class-wise sampling not supported\\.")
 })
 
 test_that("Inbag counts match sample fraction, classification", {
   ## With replacement
-  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4), 
+  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4),
                replace = TRUE, keep.inbag = TRUE)
   inbag <- do.call(cbind, rf$inbag.counts)
   expect_equal(unique(colSums(inbag[1:50, ])), 30)
   expect_equal(unique(colSums(inbag[51:100, ])), 45)
   expect_equal(unique(colSums(inbag[101:150, ])), 60)
-  
+
   ## Without replacement
-  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2, 0.3), 
+  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2, 0.3),
                replace = FALSE, keep.inbag = TRUE)
   inbag <- do.call(cbind, rf$inbag.counts)
   expect_equal(unique(colSums(inbag[1:50, ])), 15)
@@ -81,15 +79,15 @@ test_that("Inbag counts match sample fraction, classification", {
 
 test_that("Inbag counts match sample fraction, probability", {
   ## With replacement
-  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4), 
+  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.2, 0.3, 0.4),
                replace = TRUE, keep.inbag = TRUE, probability = TRUE)
   inbag <- do.call(cbind, rf$inbag.counts)
   expect_equal(unique(colSums(inbag[1:50, ])), 30)
   expect_equal(unique(colSums(inbag[51:100, ])), 45)
   expect_equal(unique(colSums(inbag[101:150, ])), 60)
-  
+
   ## Without replacement
-  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2, 0.3), 
+  rf <- ranger(Species ~ ., iris, num.trees = 5, sample.fraction = c(0.1, 0.2, 0.3),
                replace = FALSE, keep.inbag = TRUE, probability = TRUE)
   inbag <- do.call(cbind, rf$inbag.counts)
   expect_equal(unique(colSums(inbag[1:50, ])), 15)
@@ -105,8 +103,8 @@ test_that("as.factor() in formula works", {
 
 test_that("holdout mode holding out data with 0 weight", {
   weights <- rbinom(nrow(iris), 1, 0.5)
-  rf <- ranger(Species ~ ., iris, num.trees = 5, importance = "permutation",  
-               case.weights = weights, replace = FALSE, sample.fraction = 0.632*mean(weights), 
+  rf <- ranger(Species ~ ., iris, num.trees = 5, importance = "permutation",
+               case.weights = weights, replace = FALSE, sample.fraction = 0.632*mean(weights),
                holdout = TRUE, keep.inbag = TRUE)
   inbag <- data.frame(rf$inbag.counts)
   expect_true(all(inbag[weights == 0, ] == 0))
@@ -114,8 +112,8 @@ test_that("holdout mode holding out data with 0 weight", {
 
 test_that("holdout mode uses holdout OOB data", {
   weights <- rbinom(nrow(iris), 1, 0.5)
-  rf <- ranger(Species ~ ., iris, num.trees = 5, importance = "permutation",  
-               case.weights = weights, replace = FALSE, sample.fraction = 0.632*mean(weights), 
+  rf <- ranger(Species ~ ., iris, num.trees = 5, importance = "permutation",
+               case.weights = weights, replace = FALSE, sample.fraction = 0.632*mean(weights),
                holdout = TRUE, keep.inbag = TRUE)
   expect_false(any(is.na(rf$predictions[weights == 0])))
   expect_true(all(is.na(rf$predictions[weights == 1])))
@@ -127,8 +125,8 @@ test_that("holdout mode not working if no weights", {
 
 test_that("holdout mode: no OOB prediction if no 0 weights", {
   weights <- runif(nrow(iris))
-  rf <- ranger(Species ~ ., iris, num.trees = 5, importance = "permutation",  
-               case.weights = weights, replace = FALSE, 
+  rf <- ranger(Species ~ ., iris, num.trees = 5, importance = "permutation",
+               case.weights = weights, replace = FALSE,
                holdout = TRUE, keep.inbag = TRUE)
   expect_true(all(is.na(rf$predictions)))
 })
@@ -180,8 +178,8 @@ test_that("Split points are at (A+B)/2 for numeric features, regression variance
   rf <- ranger(y ~ x, dat, num.trees = 10)
   split_points <- mapply(function(varID, value) {
     value[varID > 0]
-    }, 
-    rf$forest$split.varIDs, 
+    },
+    rf$forest$split.varIDs,
     rf$forest$split.values
   )
   expect_equal(split_points, rep(0.5, rf$num.trees))
@@ -192,8 +190,8 @@ test_that("Split points are at (A+B)/2 for numeric features, regression maxstat 
   rf <- ranger(y ~ x, dat, num.trees = 10, splitrule = "maxstat", alpha = 1)
   split_points <- mapply(function(varID, value) {
     value[varID > 0]
-    }, 
-    rf$forest$split.varIDs, 
+    },
+    rf$forest$split.varIDs,
     rf$forest$split.values
   )
   expect_equal(split_points, rep(0.5, rf$num.trees))
@@ -204,8 +202,8 @@ test_that("Split points are at (A+B)/2 for numeric features, classification", {
   rf <- ranger(y ~ x, dat, num.trees = 10)
   split_points <- mapply(function(varID, value) {
     value[varID > 0]
-  }, 
-  rf$forest$split.varIDs, 
+  },
+  rf$forest$split.varIDs,
   rf$forest$split.values
   )
   expect_equal(split_points, rep(0.5, rf$num.trees))
@@ -216,8 +214,8 @@ test_that("Split points are at (A+B)/2 for numeric features, probability", {
   rf <- ranger(y ~ x, dat, num.trees = 10, probability = TRUE)
   split_points <- mapply(function(varID, value) {
     value[varID > 0]
-  }, 
-  rf$forest$split.varIDs, 
+  },
+  rf$forest$split.varIDs,
   rf$forest$split.values
   )
   expect_equal(split_points, rep(0.5, rf$num.trees))
@@ -228,8 +226,8 @@ test_that("Split points are at (A+B)/2 for numeric features, survival logrank sp
   rf <- ranger(Surv(time, status) ~ x, dat, num.trees = 10, splitrule = "logrank")
   split_points <- mapply(function(varID, value) {
     value[varID > 0]
-  }, 
-  rf$forest$split.varIDs, 
+  },
+  rf$forest$split.varIDs,
   rf$forest$split.values
   )
   expect_equal(split_points, rep(0.5, rf$num.trees))
@@ -240,8 +238,8 @@ test_that("Split points are at (A+B)/2 for numeric features, survival C-index sp
   rf <- ranger(Surv(time, status) ~ x, dat, num.trees = 10, splitrule = "C")
   split_points <- mapply(function(varID, value) {
     value[varID > 0]
-  }, 
-  rf$forest$split.varIDs, 
+  },
+  rf$forest$split.varIDs,
   rf$forest$split.values
   )
   expect_equal(split_points, rep(0.5, rf$num.trees))
@@ -252,8 +250,8 @@ test_that("Split points are at (A+B)/2 for numeric features, survival maxstat sp
   rf <- ranger(Surv(time, status) ~ x, dat, num.trees = 10, splitrule = "maxstat", alpha = 1)
   split_points <- mapply(function(varID, value) {
     value[varID > 0]
-  }, 
-  rf$forest$split.varIDs, 
+  },
+  rf$forest$split.varIDs,
   rf$forest$split.values
   )
   expect_equal(split_points, rep(0.5, rf$num.trees))
@@ -269,7 +267,7 @@ test_that("No error if variable named forest", {
 test_that("Prediction error not NA if oob.error=TRUE", {
   rf <- ranger(Species ~ ., iris, num.trees = 5)
   expect_false(is.na(rf$prediction.error))
-  
+
   rf <- ranger(Surv(time,status) ~ ., veteran, num.trees = 5)
   expect_false(is.na(rf$prediction.error))
 })
@@ -277,7 +275,7 @@ test_that("Prediction error not NA if oob.error=TRUE", {
 test_that("Prediction error is NA if oob.error=FALSE", {
   rf <- ranger(Species ~ ., iris, num.trees = 5, oob.error = FALSE)
   expect_true(is.na(rf$prediction.error))
-  
+
   rf <- ranger(Surv(time,status) ~ ., veteran, num.trees = 5, oob.error = FALSE)
   expect_true(is.na(rf$prediction.error))
 })
@@ -296,15 +294,15 @@ test_that("Tree depth creates trees of correct size", {
   forest_depth <- function(rf) {
     sapply(1:rf$num.trees, depth, rf = rf, i = 1)
   }
-  
+
   # Depth 1
   rf <- ranger(Species ~ ., iris, num.trees = 5, max.depth = 1)
   expect_true(all(forest_depth(rf) <= 1))
-  
+
   # Depth 4
   rf <- ranger(Species ~ ., iris, num.trees = 5, max.depth = 4)
   expect_true(all(forest_depth(rf) <= 4))
-  
+
   # Random depth (deeper trees)
   max.depth <- round(runif(1, 1, 20))
   dat <- data.frame(y = runif(100, 0, 1), x = runif(100, 0, 1))
@@ -315,11 +313,11 @@ test_that("Tree depth creates trees of correct size", {
 test_that("Tree depth 0 equivalent to unlimited", {
   set.seed(200)
   rf1 <- ranger(Species ~ ., iris, num.trees = 5, max.depth = 0)
-  
+
   set.seed(200)
   rf2 <- ranger(Species ~ ., iris, num.trees = 5)
-  
-  expect_equal(sapply(rf1$forest$split.varIDs, length), 
+
+  expect_equal(sapply(rf1$forest$split.varIDs, length),
                sapply(rf2$forest$split.varIDs, length))
 })
 
@@ -331,8 +329,8 @@ test_that("Meaningful predictions with max.depth = 1", {
 })
 
 test_that("Does not crash when variable named 'none'", {
-  dat <- data.frame(y = rbinom(100, 1, .5), 
-                    x = rbinom(100, 1, .5), 
+  dat <- data.frame(y = rbinom(100, 1, .5),
+                    x = rbinom(100, 1, .5),
                     none = rbinom(100, 1, .5))
   rf <- ranger(data = dat, dependent.variable.name = "y")
   expect_equal(rf$forest$independent.variable.names, c("x", "none"))
@@ -347,6 +345,6 @@ test_that("mtry function input works as expected", {
 
 test_that("mtry function error halts the ranger function", {
   expect_error(
-    ranger(Species ~ ., data = iris, mtry = function(n) stop("this is some error")), 
+    ranger(Species ~ ., data = iris, mtry = function(n) stop("this is some error")),
     "mtry function evaluation resulted in an error.")
 })
