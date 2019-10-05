@@ -108,12 +108,12 @@ void TreeRegression::createEmptyNodeInternal() {
 // Empty on purpose
 }
 
-double TreeRegression::computePredictionAccuracyInternal() {
+double TreeRegression::computePredictionAccuracyInternal(std::vector<size_t>& pred_nodeIDs) {
 
-  size_t num_predictions = prediction_terminal_nodeIDs.size();
+  size_t num_predictions = pred_nodeIDs.size();
   double sum_of_squares = 0;
   for (size_t i = 0; i < num_predictions; ++i) {
-    size_t terminal_nodeID = prediction_terminal_nodeIDs[i];
+    size_t terminal_nodeID = pred_nodeIDs[i];
     double predicted_value = split_values[terminal_nodeID];
     double real_value = data->get(oob_sampleIDs[i], dependent_varID);
     if (predicted_value != real_value) {
@@ -121,6 +121,63 @@ double TreeRegression::computePredictionAccuracyInternal() {
     }
   }
   return (1.0 - sum_of_squares / (double) num_predictions);
+}
+
+
+double TreeRegression::computePredictionCasewiseErrorInternal(std::vector<size_t>& pred_nodeIDs,
+    std::vector<double>& prederr_casewise) {
+
+  size_t num_predictions = pred_nodeIDs.size();
+  double sum_of_squares = 0;
+  for (size_t i = 0; i < num_predictions; ++i) {
+    size_t terminal_nodeID = pred_nodeIDs[i];
+    double predicted_value = split_values[terminal_nodeID];
+    double real_value = data->get(oob_sampleIDs[i], dependent_varID);
+    double diff = (predicted_value - real_value) * (predicted_value - real_value);
+    prederr_casewise[i] = diff;
+    if (predicted_value != real_value) {
+      sum_of_squares += diff;
+    }
+  }
+  return (1.0 - sum_of_squares / (double) num_predictions);
+}
+
+void TreeRegression::computeCorValues(std::vector<size_t>& pred_normal_nodeIDs, std::vector<size_t>& pred_shuf_nodeIDs,
+  std::vector<size_t>& permutations, size_t i, size_t varID, std::vector<double>& forest_importance_cor) {
+
+  double sumx = 0;
+  double sumy = 0;
+  double sumxy = 0;
+  double sumxx = 0;
+  double sumyy = 0;
+
+  size_t num_predictions = pred_normal_nodeIDs.size();
+  for (size_t i = 0; i < num_predictions; ++i) {
+
+    size_t terminal_normal_nodeID = pred_normal_nodeIDs[i];
+    size_t terminal_shuf_nodeID = pred_shuf_nodeIDs[i];
+    double pred_normal_value = split_values[terminal_normal_nodeID];
+    double pred_shuf_value = split_values[terminal_shuf_nodeID];
+
+    double real_normal_reg = data->get(oob_sampleIDs[i], varID);
+    double real_shuf_reg = data->get(permutations[i], varID);
+
+    double diffx = real_shuf_reg - real_normal_reg;
+    double diffy = pred_shuf_value - pred_normal_value;
+
+    sumx += diffx;
+    sumy += diffy;
+    sumxy += diffx * diffy;
+    sumxx += diffx * diffx;
+    sumyy += diffy * diffy;
+  }
+
+  forest_importance_cor[i * 6 + 0] += num_predictions;
+  forest_importance_cor[i * 6 + 1] += sumx;
+  forest_importance_cor[i * 6 + 2] += sumy;
+  forest_importance_cor[i * 6 + 3] += sumxy;
+  forest_importance_cor[i * 6 + 4] += sumxx;
+  forest_importance_cor[i * 6 + 5] += sumyy;
 }
 
 bool TreeRegression::findBestSplit(size_t nodeID, std::vector<size_t>& possible_split_varIDs) {

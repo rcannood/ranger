@@ -51,7 +51,10 @@ private:
   bool splitNodeInternal(size_t nodeID, std::vector<size_t>& possible_split_varIDs) override;
   void createEmptyNodeInternal() override;
 
-  double computePredictionAccuracyInternal() override;
+  double computePredictionAccuracyInternal(std::vector<size_t>& pred_nodeIDs) override;
+  double computePredictionCasewiseErrorInternal(std::vector<size_t>& pred_nodeIDs, std::vector<double>& prederr_casewise) override;
+  void computeCorValues(std::vector<size_t>& pred_normal_nodeIDs, std::vector<size_t>& pred_shuf_nodeIDs,
+      std::vector<size_t>& permutations, size_t i, size_t varID, std::vector<double>& forest_importance_cor) override;
 
   // Called by splitNodeInternal(). Sets split_varIDs and split_values.
   bool findBestSplit(size_t nodeID, std::vector<size_t>& possible_split_varIDs);
