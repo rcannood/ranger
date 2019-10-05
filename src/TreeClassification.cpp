@@ -120,12 +120,12 @@ void TreeClassification::createEmptyNodeInternal() {
   // Empty on purpose
 }
 
-double TreeClassification::computePredictionAccuracyInternal(std::vector<size_t>& pred_nodeIDs) {
+double TreeClassification::computePredictionAccuracyInternal() {
 
-  size_t num_predictions = pred_nodeIDs.size();
+  size_t num_predictions = prediction_terminal_nodeIDs.size();
   size_t num_missclassifications = 0;
   for (size_t i = 0; i < num_predictions; ++i) {
-    size_t terminal_nodeID = pred_nodeIDs[i];
+    size_t terminal_nodeID = prediction_terminal_nodeIDs[i];
     double predicted_value = split_values[terminal_nodeID];
     double real_value = data->get(oob_sampleIDs[i], dependent_varID);
     if (predicted_value != real_value) {
@@ -135,12 +135,8 @@ double TreeClassification::computePredictionAccuracyInternal(std::vector<size_t>
   return (1.0 - (double) num_missclassifications / (double) num_predictions);
 }
 
-double TreeClassification::computePredictionCasewiseErrorInternal(std::vector<size_t>& pred_nodeIDs, std::vector<double>& prederr_casewise) {
+double TreeClassification::computePredictionCasewiseErrorInternal(std::vector<double>& prederr_casewise) {
   return (0);
-}
-void TreeClassification::computeCorValues(std::vector<size_t>& pred_normal_nodeIDs, std::vector<size_t>& pred_shuf_nodeIDs,
-    std::vector<size_t>& permutations, size_t i, size_t varID, std::vector<double>& forest_importance_cor) {
-
 }
 
 bool TreeClassification::findBestSplit(size_t nodeID, std::vector<size_t>& possible_split_varIDs) {

@@ -50,7 +50,7 @@ public:
   void predict(const Data* prediction_data, bool oob_prediction);
 
   void computePermutationImportance(std::vector<double>& forest_importance, std::vector<double>& forest_variance,
-      std::vector<double>& forest_importance_casewise, std::vector<double>& forest_importance_cor);
+      std::vector<double>& forest_importance_casewise);
 
   void appendToFile(std::ofstream& file);
   virtual void appendToFileInternal(std::ofstream& file) = 0;
@@ -86,12 +86,10 @@ protected:
   virtual void createEmptyNodeInternal() = 0;
 
   size_t dropDownSamplePermuted(size_t permuted_varID, size_t sampleID, size_t permuted_sampleID);
-  void permuteAndPredictOobSamples(size_t permuted_varID, std::vector<size_t>& permutations, std::vector<size_t>& pred_nodeIDs);
+  void permuteAndPredictOobSamples(size_t permuted_varID, std::vector<size_t>& permutations);
 
-  virtual double computePredictionAccuracyInternal(std::vector<size_t>& pred_nodeIDs) = 0;
-  virtual double computePredictionCasewiseErrorInternal(std::vector<size_t>& pred_nodeIDs, std::vector<double>& prederr_casewise) = 0;
-  virtual void computeCorValues(std::vector<size_t>& pred_normal_nodeIDs, std::vector<size_t>& pred_shuf_nodeIDs,
-      std::vector<size_t>& permutations, size_t i, size_t varID, std::vector<double>& forest_importance_cor) = 0;
+  virtual double computePredictionAccuracyInternal() = 0;
+  virtual double computePredictionCasewiseErrorInternal(std::vector<double>& prederr_casewise) = 0;
 
   void bootstrap();
   void bootstrapWithoutReplacement();

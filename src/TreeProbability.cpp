@@ -124,25 +124,22 @@ void TreeProbability::createEmptyNodeInternal() {
   terminal_class_counts.push_back(std::vector<double>());
 }
 
-double TreeProbability::computePredictionAccuracyInternal(std::vector<size_t>& pred_nodeIDs) {
+double TreeProbability::computePredictionAccuracyInternal() {
 
-  size_t num_predictions = pred_nodeIDs.size();
+  size_t num_predictions = prediction_terminal_nodeIDs.size();
   double sum_of_squares = 0;
   for (size_t i = 0; i < num_predictions; ++i) {
     size_t sampleID = oob_sampleIDs[i];
     size_t real_classID = (*response_classIDs)[sampleID];
-    size_t terminal_nodeID = pred_nodeIDs[i];
+    size_t terminal_nodeID = prediction_terminal_nodeIDs[i];
     double predicted_value = terminal_class_counts[terminal_nodeID][real_classID];
     sum_of_squares += (1 - predicted_value) * (1 - predicted_value);
   }
   return (1.0 - sum_of_squares / (double) num_predictions);
 }
 
-double TreeProbability::computePredictionCasewiseErrorInternal(std::vector<size_t>& pred_nodeIDs, std::vector<double>& prederr_casewise) {
+double TreeProbability::computePredictionCasewiseErrorInternal(std::vector<double>& prederr_casewise) {
   return (0);
-}
-void TreeProbability::computeCorValues(std::vector<size_t>& pred_normal_nodeIDs, std::vector<size_t>& pred_shuf_nodeIDs,
-    std::vector<size_t>& permutations, size_t i, size_t varID, std::vector<double>& forest_importance_cor) {
 }
 
 bool TreeProbability::findBestSplit(size_t nodeID, std::vector<size_t>& possible_split_varIDs) {
