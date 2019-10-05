@@ -166,8 +166,6 @@ With recent R versions, multithreading on Windows platforms should just work.
 If you compile yourself, the new RTools toolchain is required.
 }
 \examples{
-require(ranger)
-
 ## Classification forest with default settings
 ranger(Species ~ ., data = iris)
 
