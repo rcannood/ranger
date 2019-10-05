@@ -76,16 +76,14 @@ importance.ranger <- function(x, ...) {
 ##' @param ... Further arguments passed to \code{ranger()}. Used in the "altmann" method only.
 ##' @return Variable importance and p-value for each variable.
 ##' @examples
-##' require(ranger)
-##' 
 ##' ## Janitza's p-values with corrected Gini importance
 ##' n <- 50
 ##' p <- 400
 ##' dat <- data.frame(y = factor(rbinom(n, 1, .5)), replicate(p, runif(n)))
 ##' rf.sim <- ranger(y ~ ., dat, importance = "impurity_corrected")
 ##' importance_pvalues(rf.sim, method = "janitza")
-##' 
-##' ## Permutation p-values 
+##'
+##' ## Permutation p-values
 ##' \dontrun{
 ##' rf.iris <- ranger(Species ~ ., data = iris, importance = 'permutation')
 ##' importance_pvalues(rf.iris, method = "altmann", formula = Species ~ ., data = iris)
@@ -95,7 +93,7 @@ importance.ranger <- function(x, ...) {
 ##' @references
 ##'   Janitza, S., Celik, E. & Boulesteix, A.-L., (2016). A computationally fast variable importance test for random forests for high-dimensional data. Adv Data Anal Classif \url{https://doi.org/10.1007/s11634-016-0276-4}. \cr
 ##'   Altmann, A., Tolosi, L., Sander, O. & Lengauer, T. (2010). Permutation importance: a corrected feature importance measure, Bioinformatics 26:1340-1347.
-##' @export 
+##' @export
 importance_pvalues <- function(x, method = c("janitza", "altmann"), num.permutations = 100, formula = NULL, data = NULL, ...) {
   method <- match.arg(method)
   if (class(x) != "ranger" & class(x) != "holdoutRF") {

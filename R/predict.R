@@ -496,8 +496,6 @@ predict.ranger.forest <- function(object, data, predict.all = FALSE,
 ##'       \code{num.samples}     \tab Number of samples.
 ##'   }
 ##' @examples
-##' require(ranger)
-##'
 ##' ## Classification forest
 ##' ranger(Species ~ ., data = iris)
 ##' train.idx <- sample(nrow(iris), 2/3 * nrow(iris))
@@ -506,23 +504,23 @@ predict.ranger.forest <- function(object, data, predict.all = FALSE,
 ##' rg.iris <- ranger(Species ~ ., data = iris.train)
 ##' pred.iris <- predict(rg.iris, data = iris.test)
 ##' table(iris.test$Species, pred.iris$predictions)
-##' 
+##'
 ##' ## Quantile regression forest
 ##' rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
 ##' pred <- predict(rf, mtcars[27:32, ], type = "quantiles", quantiles = c(0.1, 0.5, 0.9))
 ##' pred$predictions
-##' 
+##'
 ##' ## Quantile regression forest with user-specified function
 ##' rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
-##' pred <- predict(rf, mtcars[27:32, ], type = "quantiles", 
+##' pred <- predict(rf, mtcars[27:32, ], type = "quantiles",
 ##'                 what = function(x) sample(x, 10, replace = TRUE))
 ##' pred$predictions
-##' 
+##'
 ##' @references
 ##' \itemize{
 ##'   \item Wright, M. N. & Ziegler, A. (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. J Stat Softw 77:1-17. \url{https://doi.org/10.18637/jss.v077.i01}.
 ##'   \item Wager, S., Hastie T., & Efron, B. (2014). Confidence Intervals for Random Forests: The Jackknife and the Infinitesimal Jackknife. J Mach Learn Res 15:1625-1651. \url{http://jmlr.org/papers/v15/wager14a.html}.
-##'   \item Meinshausen (2006). Quantile Regression Forests. J Mach Learn Res 7:983-999. \url{http://www.jmlr.org/papers/v7/meinshausen06a.html}.  
+##'   \item Meinshausen (2006). Quantile Regression Forests. J Mach Learn Res 7:983-999. \url{http://www.jmlr.org/papers/v7/meinshausen06a.html}.
 ##'   }
 ##' @seealso \code{\link{ranger}}
 ##' @author Marvin N. Wright
@@ -530,7 +528,7 @@ predict.ranger.forest <- function(object, data, predict.all = FALSE,
 predict.ranger <- function(object, data = NULL, predict.all = FALSE,
                            num.trees = object$num.trees,
                            type = "response", se.method = "infjack",
-                           quantiles = c(0.1, 0.5, 0.9), 
+                           quantiles = c(0.1, 0.5, 0.9),
                            what = NULL,
                            seed = NULL, num.threads = NULL,
                            verbose = TRUE, ...) {
@@ -541,7 +539,7 @@ predict.ranger <- function(object, data = NULL, predict.all = FALSE,
   if (object$importance.mode %in% c("impurity_corrected", "impurity_unbiased")) {
     warning("Forest was grown with 'impurity_corrected' variable importance. For prediction it is advised to grow another forest without this importance setting.")
   }
-  
+
   if (type == "quantiles") {
     ## Quantile prediction
     if (object$treetype != "Regression") {
@@ -550,7 +548,7 @@ predict.ranger <- function(object, data = NULL, predict.all = FALSE,
     if (is.null(object$random.node.values)) {
       stop("Error: Set quantreg=TRUE in ranger(...) for quantile prediction.")
     }
-    
+
     if (is.null(data)) {
       ## OOB prediction
       if (is.null(object$random.node.values.oob)) {
