@@ -1,4 +1,4 @@
 library(testthat)
-library(ranger)
+library(rangercase)
 
-test_check("ranger")
+test_check("rangercase")
